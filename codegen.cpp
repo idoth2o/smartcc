@@ -1,6 +1,6 @@
 #include "codegen.h"
 #include "node.h"
-//#include "parser.hpp"
+#include "parser.hpp"
 
 using namespace std;
 
@@ -17,7 +17,7 @@ void CodeGenContext::generateCode(NBlock& root)
 	
 	/* Push a new variable/block context */
 	pushBlock(bblock);
-	//root.codeGen(*this); /* emit bytecode for the toplevel block */
+	root.codeGen(*this); /* emit bytecode for the toplevel block */
 	ReturnInst::Create(MyContext, bblock);
 	popBlock();
 	
@@ -25,7 +25,7 @@ void CodeGenContext::generateCode(NBlock& root)
 	   to see if our program compiled properly
 	 */
 	std::cout << "Code is generated.\n";
-	// module->dump();
+	//module->dump();
 
 	auto TargetTriple = sys::getDefaultTargetTriple();
   	module->setTargetTriple(TargetTriple);
@@ -96,6 +96,33 @@ static Type *typeOf(const NIdentifier& type)
 
 /* -- Code Generation -- */
 
+Value* NBlock::codeGen(CodeGenContext& context)
+{
+	StatementList::const_iterator it;
+	Value *last = NULL;
+	for (it = statements.begin(); it != statements.end(); it++) {
+		std::cout << "Generating code for " << typeid(**it).name() << endl;
+		last = (**it).codeGen(context);
+	}
+	std::cout << "Creating block" << endl;
+	return last;
+}
+
+Value* NExpressionStatement::codeGen(CodeGenContext& context)
+{
+	std::cout << "Generating code for " << typeid(expression).name() << endl;
+	return expression.codeGen(context);
+}
+
+Value* NReturnStatement::codeGen(CodeGenContext& context)
+{
+	std::cout << "Generating return code for " << typeid(expression).name() << endl;
+	Value *returnValue = expression.codeGen(context);
+	context.setCurrentReturnValue(returnValue);
+	return returnValue;
+}
+
+
 Value* NInteger::codeGen(CodeGenContext& context)
 {
 	std::cout << "Creating integer: " << value << endl;
@@ -110,6 +137,28 @@ Value* NIdentifier::codeGen(CodeGenContext& context)
 		return NULL;
 	}
 	return new LoadInst(context.locals()[name], "", false, context.currentBlock());
+}
+
+Value* NAssignment::codeGen(CodeGenContext& context)
+{
+	std::cout << "Creating assignment for " << lhs.name << endl;
+	if (context.locals().find(lhs.name) == context.locals().end()) {
+		std::cerr << "undeclared variable " << lhs.name << endl;
+		return NULL;
+	}
+	return new StoreInst(rhs.codeGen(context), context.locals()[lhs.name], false, context.currentBlock());
+}
+
+Value* NVariableDeclaration::codeGen(CodeGenContext& context)
+{
+	std::cout << "Creating variable declaration " << type.name << " " << id.name << endl;
+	AllocaInst *alloc = new AllocaInst(typeOf(type),0,id.name.c_str(), context.currentBlock());
+	context.locals()[id.name] = alloc;
+	if (assignmentExpr != NULL) {
+		NAssignment assn(id, *assignmentExpr);
+		assn.codeGen(context);
+	}
+	return alloc;
 }
 
 

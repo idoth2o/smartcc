@@ -30,11 +30,7 @@ using namespace llvm;
 
 static LLVMContext MyContext;
 
-class NBlock{
-public:
-    NBlock(){};
-    //llvm::Value* codeGen(CodeGenContext& context);
-};
+class NBlock;
 
 class CodeGenBlock {
 public:

@@ -4,15 +4,15 @@
 
 using namespace std;
 
-//extern int yyparse();
-//extern NBlock* programBlock;
+extern int yyparse();
+extern NBlock* programBlock;
 
 void createCoreFunctions(CodeGenContext& context);
 
 int main(int argc, char **argv)
 {
-	NBlock* programBlock = new NBlock;
-	//yyparse();
+	//NBlock* programBlock = new NBlock;
+	yyparse();
 	cout << programBlock << endl;
     // see http://comments.gmane.org/gmane.comp.compilers.llvm.devel/33877
 	InitializeNativeTarget();

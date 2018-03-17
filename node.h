@@ -4,7 +4,7 @@
 #include <vector>
 #include <llvm/IR/Value.h>
 
-
+class CodeGenContext;
 class NStatement;
 class NExpression;
 class NVariableDeclaration;
@@ -25,6 +25,13 @@ class NExpression : public Node {
 class NStatement : public Node {
 };
 
+class NBlock : public NExpression {
+public:
+	StatementList statements;
+	NBlock() { }
+	virtual llvm::Value* codeGen(CodeGenContext& context);
+};
+
 class NInteger : public NExpression {
 public:
 	long long value;
@@ -39,3 +46,39 @@ public:
 	virtual llvm::Value* codeGen(CodeGenContext& context);
 };
 
+class NAssignment : public NExpression {
+public:
+        NIdentifier& lhs;
+        NExpression& rhs;
+        NAssignment(NIdentifier& lhs, NExpression& rhs) :
+                lhs(lhs), rhs(rhs) { }
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+};
+
+class NExpressionStatement : public NStatement {
+public:
+        NExpression& expression;
+        NExpressionStatement(NExpression& expression) :
+                expression(expression) { }
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+};
+
+class NReturnStatement : public NStatement {
+public:
+        NExpression& expression;
+        NReturnStatement(NExpression& expression) :
+                expression(expression) { }
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+};
+
+class NVariableDeclaration : public NStatement {
+public:
+        const NIdentifier& type;
+        NIdentifier& id;
+        NExpression *assignmentExpr;
+        NVariableDeclaration(const NIdentifier& type, NIdentifier& id) :
+                type(type), id(id) { assignmentExpr = NULL; }
+        NVariableDeclaration(const NIdentifier& type, NIdentifier& id, NExpression *assignmentExpr) :
+                type(type), id(id), assignmentExpr(assignmentExpr) { }
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+};
