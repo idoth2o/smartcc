@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 	InitializeNativeTargetAsmParser();
 
 	CodeGenContext context;
-	//createCoreFunctions(context);
+	createCoreFunctions(context);
 	context.generateCode(*programBlock);
 	context.runCode();
 	

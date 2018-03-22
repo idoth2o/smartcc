@@ -85,6 +85,7 @@ GenericValue CodeGenContext::runCode() {
 /* Returns an LLVM type based on the identifier */
 static Type *typeOf(const NIdentifier& type) 
 {
+	std::cout << "Type:" << type.name << std::endl;
 	if (type.name.compare("int") == 0) {
 		return Type::getInt64Ty(MyContext);
 	}
@@ -98,11 +99,10 @@ static Type *typeOf(const NIdentifier& type)
 
 Value* NBlock::codeGen(CodeGenContext& context)
 {
-	StatementList::const_iterator it;
 	Value *last = NULL;
-	for (it = statements.begin(); it != statements.end(); it++) {
-		std::cout << "Generating code for " << typeid(**it).name() << endl;
-		last = (**it).codeGen(context);
+	for(auto statement: statements){
+		std::cout << "Generating code for " << typeid(*statement).name() << endl;
+		last = (*statement).codeGen(context);
 	}
 	std::cout << "Creating block" << endl;
 	return last;
@@ -138,6 +138,23 @@ Value* NIdentifier::codeGen(CodeGenContext& context)
 	}
 	return new LoadInst(context.locals()[name], "", false, context.currentBlock());
 }
+
+Value* NMethodCall::codeGen(CodeGenContext& context)
+{
+	Function *function = context.module->getFunction(id.name.c_str());
+	if (function == NULL) {
+		std::cerr << "no such function " << id.name << endl;
+	}
+	std::vector<Value*> args;
+	ExpressionList::const_iterator it;
+	for (it = arguments.begin(); it != arguments.end(); it++) {
+		args.push_back((**it).codeGen(context));
+	}
+	CallInst *call = CallInst::Create(function, makeArrayRef(args), "", context.currentBlock());
+	std::cout << "Creating method call: " << id.name << endl;
+	return call;
+}
+
 
 Value* NAssignment::codeGen(CodeGenContext& context)
 {

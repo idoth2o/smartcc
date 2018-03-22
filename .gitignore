@@ -1,0 +1,6 @@
+*.o
+*.out
+parser.cpp
+parser.hpp
+tokens.cpp
+parser

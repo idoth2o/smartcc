@@ -46,6 +46,16 @@ public:
 	virtual llvm::Value* codeGen(CodeGenContext& context);
 };
 
+class NMethodCall : public NExpression {
+public:
+	const NIdentifier& id;
+	ExpressionList arguments;
+	NMethodCall(const NIdentifier& id, ExpressionList& arguments) :
+		id(id), arguments(arguments) { }
+	NMethodCall(const NIdentifier& id) : id(id) { }
+	virtual llvm::Value* codeGen(CodeGenContext& context);
+};
+
 class NAssignment : public NExpression {
 public:
         NIdentifier& lhs;
